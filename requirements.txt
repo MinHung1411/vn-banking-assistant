@@ -13,8 +13,7 @@ transformers
 torch
 sentence-transformers
 underthesea
-datasets
-pyarrow>=14.0.0
+
 
 # Utils
 httpx
