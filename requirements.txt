@@ -19,3 +19,6 @@ datasets
 httpx
 python-dotenv
 huggingface_hub<0.25
+
+# Pin for gradio 4.44.0 compatibility (pre-installed on HF Spaces)
+jinja2<3.1.4
