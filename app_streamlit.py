@@ -16,7 +16,7 @@ st.set_page_config(
 # Import backend agent
 from src.agent import stream_agent_response, get_agent_history, clear_agent_history, list_agent_threads
 
-# Custom CSS cho giao diện sắc nét, độ tương phản cao, tràn viền đẹp mắt
+# Custom CSS Glassmorphism đồng bộ 100% phong cách web local
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
@@ -35,38 +35,108 @@ st.markdown("""
     div[data-testid="stChatMessage"] {
         background-color: #1e293b !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 16px !important;
-        padding: 16px !important;
+        border-radius: 18px !important;
+        padding: 18px !important;
         color: #f8fafc !important;
-        margin-bottom: 12px !important;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+        margin-bottom: 14px !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
     }
     
     div[data-testid="stChatMessage"] p, div[data-testid="stChatMessage"] div {
         color: #f8fafc !important;
         font-size: 0.98rem !important;
-        line-height: 1.6 !important;
+        line-height: 1.65 !important;
     }
 
-    /* Header Container */
+    /* Styling cho Chat Input ở dưới cùng (Đồng bộ Dark Theme, không còn màu trắng lệch tông) */
+    div[data-testid="stChatInput"] {
+        background-color: #1e293b !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 16px !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+    }
+    
+    div[data-testid="stChatInput"] textarea {
+        color: #f8fafc !important;
+        background-color: transparent !important;
+        font-size: 0.95rem !important;
+    }
+
+    div[data-testid="stChatInput"] button {
+        background-color: #6366f1 !important;
+        color: #ffffff !important;
+        border-radius: 10px !important;
+        border: none !important;
+    }
+
+    /* Header Container kèm Logo & Thẻ Công Nghệ */
     .brand-header {
-        background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%);
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%);
         border: 1px solid rgba(255, 255, 255, 0.12);
         padding: 20px 24px;
         border-radius: 20px;
         margin-bottom: 20px;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     }
+    .brand-top-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 14px;
+    }
+    .brand-left {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+    .brand-icon {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+        box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+    }
     .brand-title {
-        font-size: 1.8rem;
+        font-size: 1.55rem;
         font-weight: 800;
         color: #ffffff;
         letter-spacing: -0.02em;
     }
     .brand-subtitle {
-        font-size: 0.88rem;
+        font-size: 0.85rem;
         color: #94a3b8;
-        margin-top: 4px;
+        margin-top: 2px;
+    }
+    .status-badge {
+        padding: 6px 14px;
+        background: rgba(16, 185, 129, 0.15);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        border-radius: 20px;
+        font-size: 0.78rem;
+        color: #34d399;
+        font-weight: 600;
+    }
+    .tech-pills-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .tech-pill {
+        padding: 5px 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        font-size: 0.78rem;
+        color: #cbd5e1;
+    }
+    .tech-pill b {
+        color: #818cf8;
     }
 
     /* Thẻ Badges (Aspect / Sentiment / Escalate) */
@@ -113,16 +183,6 @@ st.markdown("""
         background-color: #0f172a !important;
         border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
     }
-    
-    .sidebar-thread-item {
-        padding: 10px 14px;
-        background: rgba(30, 41, 59, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        border-radius: 12px;
-        margin-bottom: 6px;
-        color: #e2e8f0;
-        font-size: 0.85rem;
-    }
 
     /* Gợi ý nhanh (Pill Buttons) */
     .stButton>button {
@@ -159,7 +219,7 @@ if "messages" not in st.session_state:
 
 # SIDEBAR: Quản lý cuộc trò chuyện & Lịch sử phiên cũ
 with st.sidebar:
-    st.markdown("### 🏦 AI Banking Assistant")
+    st.markdown("### 🏛️ AI Banking Assistant")
     
     if st.button("✨ + Cuộc trò chuyện mới", use_container_width=True, type="primary"):
         st.session_state.thread_id = str(uuid.uuid4())[:8]
@@ -171,7 +231,6 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### 📜 LỊCH SỬ HỘI THOẠI")
     
-    # Lấy danh sách tất cả các phiên chat từ SQLite database
     threads = list_agent_threads()
     if threads:
         for t in threads:
@@ -198,8 +257,22 @@ with st.sidebar:
 # MAIN INTERFACE
 st.markdown("""
 <div class="brand-header">
-    <div class="brand-title">🏦 Vietnamese Banking Assistant</div>
-    <div class="brand-subtitle">Agent tư vấn tự động ngân hàng tiếng Việt (PhoBERT Fine-tuned + LangGraph RAG + Gemini LLM)</div>
+    <div class="brand-top-row">
+        <div class="brand-left">
+            <div class="brand-icon">🏦</div>
+            <div>
+                <div class="brand-title">Vietnamese Banking Assistant</div>
+                <div class="brand-subtitle">Agent tư vấn tự động ngân hàng tiếng Việt</div>
+            </div>
+        </div>
+        <div class="status-badge">🟢 Streamlit Online</div>
+    </div>
+    <div class="tech-pills-row">
+        <span class="tech-pill">🧠 <b>Model:</b> PhoBERT Fine-tuned</span>
+        <span class="tech-pill">🔀 <b>Router:</b> LangGraph StateGraph</span>
+        <span class="tech-pill">📚 <b>Knowledge:</b> Chroma Vector DB (RAG)</span>
+        <span class="tech-pill">⚡ <b>LLM:</b> Gemini API</span>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
