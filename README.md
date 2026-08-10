@@ -3,8 +3,9 @@ title: Vietnamese Banking Assistant
 emoji: 🏦
 colorFrom: indigo
 colorTo: blue
-sdk: docker
-app_port: 7860
+sdk: streamlit
+sdk_version: 1.38.0
+app_file: app_streamlit.py
 pinned: false
 ---
 
