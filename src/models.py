@@ -11,7 +11,6 @@ nhãn có thể bị sai.
 from functools import lru_cache
 
 import torch
-from datasets import load_dataset
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from underthesea import word_tokenize
 
@@ -37,6 +36,7 @@ _SENTIMENT_LABELS = ['negative', 'neutral', 'positive']
 @lru_cache(maxsize=1)
 def _label_maps() -> tuple[dict[int, str], dict[int, str]]:
     try:
+        from datasets import load_dataset
         ds_aspect = load_dataset(settings.label_dataset_repo, "classification", split="train")
         ds_sentiment = load_dataset(settings.label_dataset_repo, "sentiment", split="train")
         aspect_labels = sorted(set(ds_aspect["label"]))
