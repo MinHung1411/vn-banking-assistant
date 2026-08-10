@@ -1,0 +1,11 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      # Chroma index tải từ Kaggle output, giải nén ra thư mục này trước khi chạy
+      - ./chroma_banking_news:/app/chroma_banking_news:ro
+    restart: unless-stopped
