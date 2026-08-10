@@ -16,7 +16,7 @@ st.set_page_config(
 # Import backend agent
 from src.agent import stream_agent_response, get_agent_history, clear_agent_history, list_agent_threads
 
-# Custom CSS Glassmorphism đồng bộ 100% phong cách web local
+# Custom CSS ép Full Dark Mode 100% không còn ô màu trắng loang nổ
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
@@ -25,35 +25,38 @@ st.markdown("""
         font-family: 'Plus Jakarta Sans', sans-serif !important;
     }
 
-    /* Nền tổng thể Dark Slate cao cấp */
+    /* Nền tổng thể Full Dark Slate */
     .stApp {
-        background: #0b0f19 !important;
+        background-color: #0b0f19 !important;
         color: #f8fafc !important;
     }
 
-    /* Fix độ tương phản cho Chat Messages */
-    div[data-testid="stChatMessage"] {
-        background-color: #1e293b !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 18px !important;
-        padding: 18px !important;
-        color: #f8fafc !important;
-        margin-bottom: 14px !important;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+    /* Streamlit Containers */
+    header[data-testid="stHeader"] {
+        background: transparent !important;
+    }
+    footer {visibility: hidden;}
+
+    .stMainBlockContainer {
+        padding-top: 1.5rem !important;
+        padding-bottom: 2rem !important;
+        max-width: 1100px !important;
+    }
+
+    /* Khung Chat Input dưới cùng - Ép màu tối 100% */
+    div[data-testid="stBottomBlockContainer"] {
+        background-color: #0b0f19 !important;
     }
     
-    div[data-testid="stChatMessage"] p, div[data-testid="stChatMessage"] div {
+    div[data-baseweb="textarea"] {
+        background-color: #1e293b !important;
         color: #f8fafc !important;
-        font-size: 0.98rem !important;
-        line-height: 1.65 !important;
     }
 
-    /* Styling cho Chat Input ở dưới cùng (Đồng bộ Dark Theme, không còn màu trắng lệch tông) */
     div[data-testid="stChatInput"] {
         background-color: #1e293b !important;
         border: 1px solid rgba(255, 255, 255, 0.15) !important;
         border-radius: 16px !important;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
     }
     
     div[data-testid="stChatInput"] textarea {
@@ -67,6 +70,23 @@ st.markdown("""
         color: #ffffff !important;
         border-radius: 10px !important;
         border: none !important;
+    }
+
+    /* Chat Messages - Nền tối viền mảnh */
+    div[data-testid="stChatMessage"] {
+        background-color: #1e293b !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 18px !important;
+        padding: 18px !important;
+        color: #f8fafc !important;
+        margin-bottom: 14px !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+    }
+    
+    div[data-testid="stChatMessage"] p, div[data-testid="stChatMessage"] div {
+        color: #f8fafc !important;
+        font-size: 0.98rem !important;
+        line-height: 1.65 !important;
     }
 
     /* Header Container kèm Logo & Thẻ Công Nghệ */
