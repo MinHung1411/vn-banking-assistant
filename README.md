@@ -1,3 +1,14 @@
+---
+title: Vietnamese Banking Assistant
+emoji: 🏦
+colorFrom: indigo
+colorTo: blue
+sdk: gradio
+sdk_version: 4.44.0
+app_file: app.py
+pinned: false
+---
+
 # Vietnamese Banking Assistant (Multi-turn Agentic RAG)
 
 Hệ thống Trợ lý ảo AI ngân hàng tiếng Việt cấp Enterprise: phân loại phản hồi bằng **mô hình PhoBERT fine-tune riêng**, điều phối đa nhánh qua **LangGraph StateGraph**, lưu vết bộ nhớ hội thoại **SQLite Persistence**, xử lý câu hỏi đại từ mơ hồ với **Query Rewriter**, tra cứu tri thức **Chroma RAG (kèm Citations)**, bảo vệ thông tin với **PII Redactor**, cùng giao diện Web UI hỗ trợ **Voice Chat (Speech-to-Text / Text-to-Speech)**.
