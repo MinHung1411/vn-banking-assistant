@@ -13,55 +13,63 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS Glassmorphism + Dark/Light Modern Theme
+# Import backend agent
+from src.agent import stream_agent_response, get_agent_history, clear_agent_history, list_agent_threads
+
+# Custom CSS cho giao diện sắc nét, độ tương phản cao, tràn viền đẹp mắt
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-    
+
     html, body, [class*="css"] {
-        font-family: 'Plus Jakarta Sans', sans-serif;
-    }
-    
-    .stApp {
-        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
-        color: #f8fafc;
-    }
-    
-    /* Header Container */
-    .header-box {
-        background: rgba(30, 41, 59, 0.7);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 24px;
-        border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        margin-bottom: 20px;
-    }
-    .header-title {
-        font-size: 2.2rem;
-        font-weight: 800;
-        background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 6px;
-    }
-    .header-subtitle {
-        font-size: 0.95rem;
-        color: #94a3b8;
-    }
-    
-    /* Suggestion Pills Horizontal Scroll */
-    .suggestion-title {
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: #818cf8;
-        margin-bottom: 8px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
     }
 
-    /* Badges */
+    /* Nền tổng thể Dark Slate cao cấp */
+    .stApp {
+        background: #0b0f19 !important;
+        color: #f8fafc !important;
+    }
+
+    /* Fix độ tương phản cho Chat Messages */
+    div[data-testid="stChatMessage"] {
+        background-color: #1e293b !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 16px !important;
+        padding: 16px !important;
+        color: #f8fafc !important;
+        margin-bottom: 12px !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+    }
+    
+    div[data-testid="stChatMessage"] p, div[data-testid="stChatMessage"] div {
+        color: #f8fafc !important;
+        font-size: 0.98rem !important;
+        line-height: 1.6 !important;
+    }
+
+    /* Header Container */
+    .brand-header {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        padding: 20px 24px;
+        border-radius: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+    .brand-title {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: #ffffff;
+        letter-spacing: -0.02em;
+    }
+    .brand-subtitle {
+        font-size: 0.88rem;
+        color: #94a3b8;
+        margin-top: 4px;
+    }
+
+    /* Thẻ Badges (Aspect / Sentiment / Escalate) */
     .badge-container {
         display: flex;
         flex-wrap: wrap;
@@ -73,67 +81,72 @@ st.markdown("""
         border-radius: 20px;
         font-size: 0.78rem;
         font-weight: 600;
-        letter-spacing: 0.02em;
     }
     .badge-aspect {
         background: rgba(14, 165, 233, 0.2);
-        color: #38bdf8;
-        border: 1px solid rgba(56, 189, 248, 0.3);
+        color: #38bdf8 !important;
+        border: 1px solid rgba(56, 189, 248, 0.4);
     }
     .badge-sentiment-positive {
         background: rgba(34, 197, 94, 0.2);
-        color: #4ade80;
-        border: 1px solid rgba(74, 222, 128, 0.3);
+        color: #4ade80 !important;
+        border: 1px solid rgba(74, 222, 128, 0.4);
     }
     .badge-sentiment-neutral {
         background: rgba(148, 163, 184, 0.2);
-        color: #cbd5e1;
-        border: 1px solid rgba(203, 213, 225, 0.3);
+        color: #cbd5e1 !important;
+        border: 1px solid rgba(203, 213, 225, 0.4);
     }
     .badge-sentiment-negative {
         background: rgba(239, 68, 68, 0.2);
-        color: #f87171;
-        border: 1px solid rgba(248, 113, 113, 0.3);
+        color: #f87171 !important;
+        border: 1px solid rgba(248, 113, 113, 0.4);
     }
     .badge-escalate {
         background: rgba(245, 158, 11, 0.25);
-        color: #fbbf24;
-        border: 1px solid rgba(251, 191, 36, 0.4);
-        box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+        color: #fbbf24 !important;
+        border: 1px solid rgba(251, 191, 36, 0.5);
     }
-    
-    /* Custom Sidebar */
+
+    /* Sidebar Styling */
     section[data-testid="stSidebar"] {
-        background-color: rgba(15, 23, 42, 0.85);
-        border-right: 1px solid rgba(255, 255, 255, 0.08);
+        background-color: #0f172a !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
     }
     
-    /* StButton styling */
-    .stButton>button {
+    .sidebar-thread-item {
+        padding: 10px 14px;
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.05);
         border-radius: 12px;
-        border: 1px solid rgba(99, 102, 241, 0.3);
-        background: rgba(30, 41, 59, 0.8);
+        margin-bottom: 6px;
         color: #e2e8f0;
-        transition: all 0.2s ease;
+        font-size: 0.85rem;
+    }
+
+    /* Gợi ý nhanh (Pill Buttons) */
+    .stButton>button {
+        border-radius: 20px !important;
+        border: 1px solid rgba(99, 102, 241, 0.3) !important;
+        background: rgba(30, 41, 59, 0.9) !important;
+        color: #f1f5f9 !important;
+        font-weight: 500 !important;
+        font-size: 0.85rem !important;
+        transition: all 0.2s ease !important;
     }
     .stButton>button:hover {
-        background: #4f46e5;
-        color: #ffffff;
-        border-color: #6366f1;
-        transform: translateY(-1px);
+        background: #4f46e5 !important;
+        color: #ffffff !important;
+        border-color: #6366f1 !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4) !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Import backend agent
-from src.agent import stream_agent_response, get_agent_history, clear_agent_history
-
-# Session state initialization
+# Khởi tạo Session State
 if "thread_id" not in st.session_state:
     st.session_state.thread_id = str(uuid.uuid4())[:8]
-
-if "prompt_input" not in st.session_state:
-    st.session_state.prompt_input = ""
 
 if "messages" not in st.session_state:
     history = get_agent_history(st.session_state.thread_id)
@@ -141,48 +154,56 @@ if "messages" not in st.session_state:
         st.session_state.messages = history
     else:
         st.session_state.messages = [
-            {"role": "assistant", "content": "Xin chào! Tôi là Trợ lý ảo AI Ngân hàng. Tôi có thể giúp gì cho bạn hôm nay?"}
+            {"role": "assistant", "content": "Xin chào quý khách! Em là **Trợ lý ảo Ngân hàng**. Em có thể hỗ trợ quý khách tra cứu tỷ giá ngoại tệ, kiểm tra thông tin dịch vụ, tính lãi tiết kiệm hoặc kết nối tư vấn viên khi cần thiết ạ."}
         ]
 
-# Sidebar
+# SIDEBAR: Quản lý cuộc trò chuyện & Lịch sử phiên cũ
 with st.sidebar:
-    st.markdown("### 🏦 Quản lý Phiên Chat")
+    st.markdown("### 🏦 AI Banking Assistant")
     
-    if st.button("➕ Tạo cuộc trò chuyện mới", use_container_width=True, type="primary"):
+    if st.button("✨ + Cuộc trò chuyện mới", use_container_width=True, type="primary"):
         st.session_state.thread_id = str(uuid.uuid4())[:8]
         st.session_state.messages = [
-            {"role": "assistant", "content": "Xin chào! Tôi là Trợ lý ảo AI Ngân hàng. Tôi có thể giúp gì cho bạn hôm nay?"}
+            {"role": "assistant", "content": "Xin chào quý khách! Em là **Trợ lý ảo Ngân hàng**. Quý khách cần em hỗ trợ thông tin gì hôm nay ạ?"}
         ]
         st.rerun()
 
-    st.caption(f"Session ID: `{st.session_state.thread_id}`")
+    st.markdown("---")
+    st.markdown("### 📜 LỊCH SỬ HỘI THOẠI")
     
-    if st.button("🗑️ Xóa lịch sử phiên này", use_container_width=True):
+    # Lấy danh sách tất cả các phiên chat từ SQLite database
+    threads = list_agent_threads()
+    if threads:
+        for t in threads:
+            t_id = t["thread_id"]
+            t_title = t["title"]
+            is_active = (t_id == st.session_state.thread_id)
+            btn_label = f"{'💬 ' if not is_active else '👉 '} {t_title}"
+            
+            if st.button(btn_label, key=f"thread_{t_id}", use_container_width=True):
+                st.session_state.thread_id = t_id
+                st.session_state.messages = get_agent_history(t_id)
+                st.rerun()
+    else:
+        st.caption("Chưa có lịch sử cuộc trò chuyện nào.")
+
+    st.markdown("---")
+    if st.button("🗑️ Xóa phiên hiện tại", use_container_width=True):
         clear_agent_history(st.session_state.thread_id)
         st.session_state.messages = [
-            {"role": "assistant", "content": "Xin chào! Tôi là Trợ lý ảo AI Ngân hàng. Tôi có thể giúp gì cho bạn hôm nay?"}
+            {"role": "assistant", "content": "Xin chào quý khách! Em là **Trợ lý ảo Ngân hàng**. Quý khách cần em hỗ trợ thông tin gì hôm nay ạ?"}
         ]
         st.rerun()
-        
-    st.markdown("---")
-    st.markdown("### ⚡ Tính năng Nổi bật")
-    st.markdown("""
-    - 🏷️ **PhoBERT Classify**: Tự động nhận diện Aspect & Sentiment.
-    - 🔀 **LangGraph Routing**: Tự động chuyển RAG / Tool / Escalation.
-    - 🛡️ **PII Redaction**: Che mờ CCCD, Số thẻ & OTP.
-    - 📚 **Chroma RAG**: Tra cứu quy định & tin tức ngân hàng.
-    - 🛠️ **Realtime Tools**: Tra tỷ giá, tính lãi tiết kiệm, vị trí ATM.
-    """)
 
-# Header Banner
+# MAIN INTERFACE
 st.markdown("""
-<div class="header-box">
-    <div class="header-title">🏦 Vietnamese Banking Assistant</div>
-    <div class="header-subtitle">Hệ thống Trợ lý ảo AI Ngân hàng đa chức năng (PhoBERT Fine-tuned + LangGraph RAG)</div>
+<div class="brand-header">
+    <div class="brand-title">🏦 Vietnamese Banking Assistant</div>
+    <div class="brand-subtitle">Agent tư vấn tự động ngân hàng tiếng Việt (PhoBERT Fine-tuned + LangGraph RAG + Gemini LLM)</div>
 </div>
 """, unsafe_allow_html=True)
 
-# Hiển thị tin nhắn lịch sử
+# Hiển thị các tin nhắn hội thoại
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
@@ -203,34 +224,32 @@ for msg in st.session_state.messages:
             badges_html += '</div>'
             st.markdown(badges_html, unsafe_allow_html=True)
 
-# Gợi ý nhanh (Floating suggestion pills)
-st.markdown('<div class="suggestion-title">💡 Gợi ý câu hỏi nhanh</div>', unsafe_allow_html=True)
+# Gợi ý nhanh (Pill Buttons lơ lửng)
+st.caption("💡 GỢI Ý CÂU HỎI NHANH")
 col1, col2, col3, col4 = st.columns(4)
 
 selected_prompt = None
 with col1:
     if st.button("💱 Tỷ giá USD hôm nay", use_container_width=True):
-        selected_prompt = "Tỷ giá USD hôm nay là bao nhiêu?"
+        selected_prompt = "Tỷ giá USD hôm nay bao nhiêu?"
 with col2:
-    if st.button("🔒 Báo khóa thẻ khẩn cấp", use_container_width=True):
-        selected_prompt = "Tôi bị mất thẻ ngân hàng 1234, khóa thẻ giúp tôi với"
+    if st.button("💳 Trạng thái thẻ", use_container_width=True):
+        selected_prompt = "Kiểm tra giúp tôi trạng thái thẻ ****1234"
 with col3:
-    if st.button("💰 Tính lãi tiết kiệm 100tr", use_container_width=True):
+    if st.button("💰 Tính lãi tiết kiệm", use_container_width=True):
         selected_prompt = "Tính lãi tiết kiệm 100 triệu gửi 12 tháng lãi suất 5.5%"
 with col4:
-    if st.button("📍 Cây ATM gần nhất Quận 1", use_container_width=True):
+    if st.button("📍 Cây ATM & Chi nhánh", use_container_width=True):
         selected_prompt = "Tìm giúp tôi chi nhánh và cây ATM ở Quận 1"
 
-# Xử lý input từ chat_input hoặc từ gợi ý nhanh (suggestion pill)
-prompt = st.chat_input("Nhập câu hỏi hoặc yêu cầu hỗ trợ...") or selected_prompt
+# Chat Input & Stream Processing
+prompt = st.chat_input("Nhập câu hỏi của quý khách tại đây...") or selected_prompt
 
 if prompt:
-    # Hiển thị câu hỏi của user
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Hiển thị câu trả lời của assistant với Streaming thời gian thực
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         full_response = ""
@@ -238,7 +257,6 @@ if prompt:
 
         try:
             generator = stream_agent_response(prompt, thread_id=st.session_state.thread_id)
-            # Token đầu tiên chứa metadata (aspect, sentiment, escalate...)
             first_item = next(generator, None)
             if isinstance(first_item, dict):
                 meta_info = first_item
@@ -250,7 +268,6 @@ if prompt:
 
             message_placeholder.markdown(full_response)
 
-            # Hiển thị Badges metadata bên dưới câu trả lời
             aspect = meta_info.get("aspect", "")
             sentiment = meta_info.get("sentiment", "")
             escalate = meta_info.get("escalate", False)
@@ -266,7 +283,6 @@ if prompt:
             badges_html += '</div>'
             st.markdown(badges_html, unsafe_allow_html=True)
 
-            # Lưu vào session
             st.session_state.messages.append({
                 "role": "assistant",
                 "content": full_response,
