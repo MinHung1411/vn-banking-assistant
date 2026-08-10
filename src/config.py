@@ -9,7 +9,8 @@ class Settings(BaseSettings):
     # LLM (Gemini free tier — có thể đổi sang OpenAI/Claude chỉ bằng cách viết
     # thêm 1 hàm trong src/llm.py, phần còn lại của agent không cần đổi gì)
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-1.5-flash"
+    gemini_model: str = "gemini-flash-latest"
+
 
 
     # 2 model PhoBERT đã fine-tune, push lên HuggingFace Hub

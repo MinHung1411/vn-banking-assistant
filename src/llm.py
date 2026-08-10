@@ -1,4 +1,4 @@
-"""LLM factory — hỗ trợ fallback nhiều model Gemini & tự động retry khi gặp Rate Limit (429)."""
+"""LLM factory — hỗ trợ fallback nhiều model Gemini active (2026) & tự động retry khi dính Rate Limit (429)."""
 
 from functools import lru_cache
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -7,7 +7,7 @@ from .config import settings
 
 @lru_cache(maxsize=1)
 def get_llm():
-    primary_model = settings.gemini_model or "gemini-1.5-flash"
+    primary_model = settings.gemini_model or "gemini-flash-latest"
     
     primary_llm = ChatGoogleGenerativeAI(
         model=primary_model,
@@ -16,8 +16,8 @@ def get_llm():
         max_retries=3,
     )
     
-    # Các model dự phòng nếu primary model bị dính 429 Quota Exceeded
-    fallback_models = ["gemini-2.0-flash", "gemini-1.5-flash-8b", "gemini-1.5-flash"]
+    # Danh sách các model đang hoạt động thực tế trên Google GenAI API (2026)
+    fallback_models = ["gemini-flash-latest", "gemini-2.5-flash-lite", "gemini-3.6-flash", "gemini-3.5-flash"]
     fallbacks = []
     
     for m in fallback_models:
