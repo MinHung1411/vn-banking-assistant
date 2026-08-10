@@ -341,43 +341,49 @@ if prompt:
 
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
+        # Hiển thị trực tiếp dòng chữ trạng thái Đang suy nghĩ nổi bật ngay trong khung chat
+        message_placeholder.markdown("*🔍 Đang phân tích ý định (PhoBERT) & tra cứu tri thức (Chroma RAG)...* ▌")
+        
         full_response = ""
         meta_info = {}
 
-        # 1. Trạng thái Loading / Thinking (Đang phân tích ý định & tra cứu)
-        with st.spinner("🧠 Đang phân tích ý định (PhoBERT) & tra cứu tri thức (Chroma RAG)..."):
+        try:
             generator = stream_agent_response(prompt, thread_id=st.session_state.thread_id)
             first_item = next(generator, None)
             if isinstance(first_item, dict):
                 meta_info = first_item
 
-        # 2. Hiệu ứng gõ chữ thời gian thực (Typewriter Effect) mượt mà như Chatbot thực thụ
-        for token in generator:
-            if isinstance(token, str):
-                for char in token:
-                    full_response += char
-                    message_placeholder.markdown(full_response + "▌")
-                    time.sleep(0.012)  # Delay nhẹ giữa từng ký tự
+            # Thay thế dòng suy nghĩ bằng câu trả lời tự nhiên gõ từng ký tự
+            for token in generator:
+                if isinstance(token, str):
+                    for char in token:
+                        full_response += char
+                        message_placeholder.markdown(full_response + "▌")
+                        time.sleep(0.008)
 
-        message_placeholder.markdown(full_response)
+            message_placeholder.markdown(full_response)
 
-        aspect = meta_info.get("aspect", "")
-        sentiment = meta_info.get("sentiment", "")
-        escalate = meta_info.get("escalate", False)
+            aspect = meta_info.get("aspect", "")
+            sentiment = meta_info.get("sentiment", "")
+            escalate = meta_info.get("escalate", False)
 
-        s_class = f"badge-sentiment-{sentiment}" if sentiment in ["positive", "neutral", "negative"] else "badge-sentiment-neutral"
-        badges_html = '<div class="badge-container">'
-        if aspect:
-            badges_html += f'<span class="badge badge-aspect">Khía cạnh: {aspect}</span>'
-        if sentiment:
-            badges_html += f'<span class="badge {s_class}">Cảm xúc: {sentiment}</span>'
-        if escalate:
-            badges_html += '<span class="badge badge-escalate">⚠️ Chuyển tổng đài (Escalated)</span>'
-        badges_html += '</div>'
-        st.markdown(badges_html, unsafe_allow_html=True)
+            s_class = f"badge-sentiment-{sentiment}" if sentiment in ["positive", "neutral", "negative"] else "badge-sentiment-neutral"
+            badges_html = '<div class="badge-container">'
+            if aspect:
+                badges_html += f'<span class="badge badge-aspect">Khía cạnh: {aspect}</span>'
+            if sentiment:
+                badges_html += f'<span class="badge {s_class}">Cảm xúc: {sentiment}</span>'
+            if escalate:
+                badges_html += '<span class="badge badge-escalate">⚠️ Chuyển tổng đài (Escalated)</span>'
+            badges_html += '</div>'
+            st.markdown(badges_html, unsafe_allow_html=True)
 
-        st.session_state.messages.append({
-            "role": "assistant",
-            "content": full_response,
-            "meta": meta_info
-        })
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": full_response,
+                "meta": meta_info
+            })
+        except Exception as e:
+            err_msg = f"Đã xảy ra lỗi khi xử lý: {str(e)}"
+            st.error(err_msg)
+            st.session_state.messages.append({"role": "assistant", "content": err_msg})
