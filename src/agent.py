@@ -123,13 +123,20 @@ def classify_node(state: AgentState) -> AgentState:
     return {**state, **result}
 
 
+PROCEDURE_KEYWORDS = ["làm sao", "lam sao", "thủ tục", "thu tuc", "giấy tờ", "giay to", "quy trình", "quy trinh", "hướng dẫn", "huong dan", "mở thẻ", "mo the", "cấp lại", "cap lai", "cách", "cach", "chuẩn bị", "chuan bi", "đăng ký", "dang ky", "quên mật khẩu", "quen mat khau"]
+
+
 def route_decision(state: AgentState) -> str:
+    text = state["message"].lower()
+    # Nếu khách hỏi về thủ tục / quy trình / hướng dẫn -> Ưu tiên RAG giải đáp chi tiết các bước
+    if any(k in text for k in PROCEDURE_KEYWORDS):
+        return "rag"
     if state.get("escalate"):
         return "escalate"
-    text = state["message"].lower()
     if any(k in text for k in TOOL_KEYWORDS + CARD_STATUS_KEYWORDS + SAVINGS_KEYWORDS + ATM_KEYWORDS):
         return "tool"
     return "rag"
+
 
 
 def rag_node(state: AgentState) -> AgentState:
