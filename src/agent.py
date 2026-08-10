@@ -321,11 +321,13 @@ def stream_agent_response(message: str, thread_id: str = "default"):
     full_chunks = []
     messages = _build_messages(state)
     for chunk in llm.stream(messages):
-        if chunk.content:
-            full_chunks.append(chunk.content)
-            yield chunk.content
+        text_chunk = _normalize_llm_text(chunk.content)
+        if text_chunk:
+            full_chunks.append(text_chunk)
+            yield text_chunk
 
     full_response = "".join(full_chunks)
+
 
     agent.update_state(
         config,
