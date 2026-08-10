@@ -35,19 +35,10 @@ _SENTIMENT_LABELS = ['negative', 'neutral', 'positive']
 
 @lru_cache(maxsize=1)
 def _label_maps() -> tuple[dict[int, str], dict[int, str]]:
-    try:
-        from datasets import load_dataset
-        ds_aspect = load_dataset(settings.label_dataset_repo, "classification", split="train")
-        ds_sentiment = load_dataset(settings.label_dataset_repo, "sentiment", split="train")
-        aspect_labels = sorted(set(ds_aspect["label"]))
-        sentiment_labels = sorted(set(ds_sentiment["sentiment"]))
-    except Exception:
-        aspect_labels = _ASPECT_LABELS
-        sentiment_labels = _SENTIMENT_LABELS
-
-    id2aspect = {i: label for i, label in enumerate(aspect_labels)}
-    id2sentiment = {i: label for i, label in enumerate(sentiment_labels)}
+    id2aspect = {i: label for i, label in enumerate(_ASPECT_LABELS)}
+    id2sentiment = {i: label for i, label in enumerate(_SENTIMENT_LABELS)}
     return id2aspect, id2sentiment
+
 
 
 
