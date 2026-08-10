@@ -1,8 +1,4 @@
-fastapi
-uvicorn
-pydantic
-pydantic-settings
-
+# Core AI/LLM
 langchain
 langchain-core
 langgraph
@@ -12,12 +8,14 @@ langchain-huggingface
 langchain-chroma
 chromadb
 
+# ML Models
 transformers
 torch
 sentence-transformers
 underthesea
 datasets
 
+# Utils
 httpx
 python-dotenv
 huggingface_hub<0.25
