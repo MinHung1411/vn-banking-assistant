@@ -14,9 +14,9 @@ st.set_page_config(
 )
 
 # Import backend agent
-from src.agent import stream_agent_response, get_agent_history, clear_agent_history, list_agent_threads
+from src.agent import stream_agent_response, get_agent_history, clear_agent_history
 
-# Custom CSS ép Full Dark Mode 100% không còn ô màu trắng loang nổ
+# Custom CSS Glassmorphism ép Full Dark Mode 100%
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
@@ -25,13 +25,11 @@ st.markdown("""
         font-family: 'Plus Jakarta Sans', sans-serif !important;
     }
 
-    /* Nền tổng thể Full Dark Slate */
     .stApp {
         background-color: #0b0f19 !important;
         color: #f8fafc !important;
     }
 
-    /* Streamlit Containers */
     header[data-testid="stHeader"] {
         background: transparent !important;
     }
@@ -43,7 +41,6 @@ st.markdown("""
         max-width: 1100px !important;
     }
 
-    /* Khung Chat Input dưới cùng - Ép màu tối 100% */
     div[data-testid="stBottomBlockContainer"] {
         background-color: #0b0f19 !important;
     }
@@ -72,7 +69,6 @@ st.markdown("""
         border: none !important;
     }
 
-    /* Chat Messages - Nền tối viền mảnh */
     div[data-testid="stChatMessage"] {
         background-color: #1e293b !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -89,7 +85,6 @@ st.markdown("""
         line-height: 1.65 !important;
     }
 
-    /* Header Container kèm Logo & Thẻ Công Nghệ */
     .brand-header {
         background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%);
         border: 1px solid rgba(255, 255, 255, 0.12);
@@ -159,7 +154,6 @@ st.markdown("""
         color: #818cf8;
     }
 
-    /* Thẻ Badges (Aspect / Sentiment / Escalate) */
     .badge-container {
         display: flex;
         flex-wrap: wrap;
@@ -198,13 +192,11 @@ st.markdown("""
         border: 1px solid rgba(251, 191, 36, 0.5);
     }
 
-    /* Sidebar Styling */
     section[data-testid="stSidebar"] {
         background-color: #0f172a !important;
         border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
     }
 
-    /* Gợi ý nhanh (Pill Buttons) */
     .stButton>button {
         border-radius: 20px !important;
         border: 1px solid rgba(99, 102, 241, 0.3) !important;
@@ -224,51 +216,51 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Khởi tạo Session State
+# Khởi tạo Session State cô lập theo thiết bị/người dùng
 if "thread_id" not in st.session_state:
     st.session_state.thread_id = str(uuid.uuid4())[:8]
 
-if "messages" not in st.session_state:
-    history = get_agent_history(st.session_state.thread_id)
-    if history:
-        st.session_state.messages = history
-    else:
-        st.session_state.messages = [
-            {"role": "assistant", "content": "Xin chào quý khách! Em là **Trợ lý ảo Ngân hàng**. Em có thể hỗ trợ quý khách tra cứu tỷ giá ngoại tệ, kiểm tra thông tin dịch vụ, tính lãi tiết kiệm hoặc kết nối tư vấn viên khi cần thiết ạ."}
-        ]
+if "my_threads" not in st.session_state:
+    st.session_state.my_threads = {}  # {thread_id: title} - Chỉ lưu phiên của RIÊNG người dùng này
 
-# SIDEBAR: Quản lý cuộc trò chuyện & Lịch sử phiên cũ
+if "messages" not in st.session_state:
+    st.session_state.messages = [
+        {"role": "assistant", "content": "Xin chào quý khách! Em là **Trợ lý ảo Ngân hàng**. Em có thể hỗ trợ quý khách tra cứu tỷ giá ngoại tệ, kiểm tra thông tin dịch vụ, tính lãi tiết kiệm hoặc kết nối tư vấn viên khi cần thiết ạ."}
+    ]
+
+# SIDEBAR: Cô lập lịch sử cá nhân (Bảo mật 100%, không xem được của người khác)
 with st.sidebar:
     st.markdown("### 🏛️ AI Banking Assistant")
     
     if st.button("✨ + Cuộc trò chuyện mới", use_container_width=True, type="primary"):
-        st.session_state.thread_id = str(uuid.uuid4())[:8]
+        new_id = str(uuid.uuid4())[:8]
+        st.session_state.thread_id = new_id
         st.session_state.messages = [
             {"role": "assistant", "content": "Xin chào quý khách! Em là **Trợ lý ảo Ngân hàng**. Quý khách cần em hỗ trợ thông tin gì hôm nay ạ?"}
         ]
         st.rerun()
 
     st.markdown("---")
-    st.markdown("### 📜 LỊCH SỬ HỘI THOẠI")
+    st.markdown("### 📜 LỊCH SỬ CỦA BẠN")
     
-    threads = list_agent_threads()
-    if threads:
-        for t in threads:
-            t_id = t["thread_id"]
-            t_title = t["title"]
+    # CHỈ hiển thị danh sách cuộc trò chuyện do chính người dùng hiện tại tạo ra
+    if st.session_state.my_threads:
+        for t_id, t_title in list(st.session_state.my_threads.items()):
             is_active = (t_id == st.session_state.thread_id)
             btn_label = f"{'💬 ' if not is_active else '👉 '} {t_title}"
             
-            if st.button(btn_label, key=f"thread_{t_id}", use_container_width=True):
+            if st.button(btn_label, key=f"user_thread_{t_id}", use_container_width=True):
                 st.session_state.thread_id = t_id
                 st.session_state.messages = get_agent_history(t_id)
                 st.rerun()
     else:
-        st.caption("Chưa có lịch sử cuộc trò chuyện nào.")
+        st.caption("Chưa có phiên trò chuyện cá nhân nào.")
 
     st.markdown("---")
     if st.button("🗑️ Xóa phiên hiện tại", use_container_width=True):
         clear_agent_history(st.session_state.thread_id)
+        if st.session_state.thread_id in st.session_state.my_threads:
+            del st.session_state.my_threads[st.session_state.thread_id]
         st.session_state.messages = [
             {"role": "assistant", "content": "Xin chào quý khách! Em là **Trợ lý ảo Ngân hàng**. Quý khách cần em hỗ trợ thông tin gì hôm nay ạ?"}
         ]
@@ -339,6 +331,11 @@ with col4:
 prompt = st.chat_input("Nhập câu hỏi của quý khách tại đây...") or selected_prompt
 
 if prompt:
+    # Lưu tiêu đề phiên chat của riêng người dùng này
+    if st.session_state.thread_id not in st.session_state.my_threads:
+        short_title = prompt.strip()[:30] + ("..." if len(prompt.strip()) > 30 else "")
+        st.session_state.my_threads[st.session_state.thread_id] = short_title
+
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
