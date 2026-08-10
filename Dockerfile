@@ -18,4 +18,5 @@ COPY . .
 EXPOSE 7860
 
 # Chạy FastAPI server
-CMD ["python", "app.py"]
+CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "7860"]
+

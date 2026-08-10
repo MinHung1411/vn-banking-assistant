@@ -222,8 +222,9 @@ _db_conn = None
 def _get_checkpointer():
     global _db_conn
     if _db_conn is None:
-        _db_conn = sqlite3.connect("banking_chat.db", check_same_thread=False)
+        _db_conn = sqlite3.connect("banking_chat.db", check_same_thread=False, timeout=30.0)
     return SqliteSaver(_db_conn)
+
 
 
 def build_graph():
