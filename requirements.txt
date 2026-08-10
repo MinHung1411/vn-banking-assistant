@@ -8,11 +8,9 @@ langchain-core
 langgraph
 langgraph-checkpoint-sqlite
 langchain-google-genai
-google-genai
 langchain-huggingface
 langchain-chroma
 chromadb
-websockets>=13.0
 
 transformers
 torch
