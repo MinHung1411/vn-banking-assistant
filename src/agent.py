@@ -365,32 +365,35 @@ def get_agent_history(thread_id: str = "default") -> list[dict]:
 
 
 def list_agent_threads() -> list[dict]:
-    """Trả về danh sách tất cả các thread_id đang lưu trong SQLite database."""
-    agent = get_agent()
+    """Trả về danh sách tất cả các thread_id đang lưu trong SQLite database bằng SQL siêu tốc."""
+    global _db_conn
+    _get_checkpointer()
     threads = []
-    seen = set()
-    if hasattr(agent, "checkpointer") and hasattr(agent.checkpointer, "list"):
-        try:
-            for cp in agent.checkpointer.list(None):
-                cfg = getattr(cp, "config", {}) or {}
-                thread_id = cfg.get("configurable", {}).get("thread_id")
-                if thread_id and thread_id not in seen:
-                    seen.add(thread_id)
-                    history = get_agent_history(thread_id)
-                    title = "Cuộc trò chuyện mới"
-                    for msg in history:
-                        if msg["role"] == "user" and msg["content"].strip():
-                            raw_title = msg["content"].strip()
-                            title = raw_title[:35] + ("..." if len(raw_title) > 35 else "")
-                            break
-                    threads.append({
-                        "thread_id": thread_id,
-                        "title": title,
-                        "message_count": len(history),
-                    })
-        except Exception:
-            pass
+    if _db_conn is None:
+        return threads
+    try:
+        cursor = _db_conn.cursor()
+        cursor.execute("SELECT DISTINCT thread_id FROM checkpoints ORDER BY rowid DESC LIMIT 20")
+        rows = cursor.fetchall()
+        for (thread_id,) in rows:
+            if not thread_id:
+                continue
+            history = get_agent_history(thread_id)
+            title = "Cuộc trò chuyện mới"
+            for msg in history:
+                if msg["role"] == "user" and msg["content"].strip():
+                    raw_title = msg["content"].strip()
+                    title = raw_title[:35] + ("..." if len(raw_title) > 35 else "")
+                    break
+            threads.append({
+                "thread_id": thread_id,
+                "title": title,
+                "message_count": len(history),
+            })
+    except Exception:
+        pass
     return threads
+
 
 
 
