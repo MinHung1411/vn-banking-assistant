@@ -57,6 +57,8 @@ def warmup_models():
 class ChatRequest(BaseModel):
     message: str
     thread_id: str = "default"
+    api_key: str | None = None
+    model: str | None = None
 
 
 class ClearRequest(BaseModel):
@@ -103,7 +105,7 @@ def chat(req: ChatRequest):
     if not req.message.strip():
         raise HTTPException(status_code=400, detail="message không được để trống")
     try:
-        result = run_agent(req.message, req.thread_id)
+        result = run_agent(req.message, req.thread_id, api_key=req.api_key, model=req.model)
     except Exception:
         logger.exception("Lỗi khi chạy agent")
         raise HTTPException(status_code=500, detail="Lỗi xử lý phía server, thử lại sau.")
@@ -124,7 +126,7 @@ def chat_stream(req: ChatRequest):
 
     def event_generator():
         try:
-            for item in stream_agent_response(req.message, req.thread_id):
+            for item in stream_agent_response(req.message, req.thread_id, api_key=req.api_key, model=req.model):
                 if isinstance(item, dict):
                     yield f"data: {json.dumps({'meta': item}, ensure_ascii=False)}\n\n"
                 elif isinstance(item, str) and item:

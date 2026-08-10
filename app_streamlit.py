@@ -257,6 +257,27 @@ with st.sidebar:
         st.caption("Chưa có phiên trò chuyện cá nhân nào.")
 
     st.markdown("---")
+    with st.expander("⚙️ Cấu hình API Key / LLM", expanded=False):
+        st.markdown(
+            "<small style='color: #94a3b8;'>Nếu bị lỗi 429 (Hết Quota), bạn có thể dán Gemini API Key cá nhân (Miễn phí từ Google AI Studio):</small>",
+            unsafe_allow_html=True
+        )
+        custom_key_val = st.text_input(
+            "Gemini API Key cá nhân:",
+            type="password",
+            placeholder="AQ.Ab8...",
+            key="custom_api_key_input"
+        )
+        custom_model_val = st.selectbox(
+            "Model Gemini:",
+            ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro", "gemini-flash-latest"],
+            index=0,
+            key="custom_model_input"
+        )
+        if custom_key_val.strip():
+            st.success("✅ Đã kích hoạt API Key cá nhân")
+
+    st.markdown("---")
     if st.button("🗑️ Xóa phiên hiện tại", use_container_width=True):
         clear_agent_history(st.session_state.thread_id)
         if st.session_state.thread_id in st.session_state.my_threads:
@@ -348,7 +369,15 @@ if prompt:
         meta_info = {}
 
         try:
-            generator = stream_agent_response(prompt, thread_id=st.session_state.thread_id)
+            custom_key = st.session_state.get("custom_api_key_input", "").strip() or None
+            custom_model = st.session_state.get("custom_model_input", "").strip() or None
+
+            generator = stream_agent_response(
+                prompt,
+                thread_id=st.session_state.thread_id,
+                api_key=custom_key,
+                model=custom_model
+            )
             first_item = next(generator, None)
             if isinstance(first_item, dict):
                 meta_info = first_item
@@ -384,6 +413,16 @@ if prompt:
                 "meta": meta_info
             })
         except Exception as e:
-            err_msg = f"Đã xảy ra lỗi khi xử lý: {str(e)}"
-            st.error(err_msg)
+            err_str = str(e)
+            if "429" in err_str or "quota" in err_str.lower() or "exceeded" in err_str.lower():
+                err_msg = (
+                    "⚠️ **Hệ thống Gemini API đang bận hoặc quá giới hạn lượt gọi (Lỗi 429 Quota Exceeded).**\n\n"
+                    "👉 **Cách khắc phục nhanh:**\n"
+                    "1. Mở menu **⚙️ Cấu hình API Key / LLM** ở thanh bên trái (Sidebar).\n"
+                    "2. Dán API Key Gemini cá nhân của bạn vào (Tạo miễn phí 100% tại [Google AI Studio](https://aistudio.google.com/apikey)).\n"
+                    "3. Hoặc vui lòng chờ 1-2 phút rồi gửi lại câu hỏi."
+                )
+            else:
+                err_msg = f"Đã xảy ra lỗi khi xử lý: {err_str}"
+            message_placeholder.markdown(err_msg)
             st.session_state.messages.append({"role": "assistant", "content": err_msg})

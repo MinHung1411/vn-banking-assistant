@@ -95,7 +95,9 @@ def rewrite_query_with_context(state: TypedDict) -> str:
         "Câu hỏi độc lập:"
     )
     try:
-        llm = get_llm()
+        api_key = state.get("custom_api_key")
+        model = state.get("custom_model")
+        llm = get_llm(api_key=api_key, model=model)
         resp = llm.invoke([HumanMessage(content=rewrite_prompt)])
         rewritten = resp.content.strip() if resp and resp.content else raw_message
         return rewritten
@@ -112,6 +114,8 @@ class AgentState(TypedDict, total=False):
     context: str
     sources: list[str]
     response: str
+    custom_api_key: str
+    custom_model: str
 
 
 # ---------------------------------------------------------------------------
@@ -209,7 +213,9 @@ def _build_messages(state: AgentState) -> list:
 
 
 def generate_node(state: AgentState) -> AgentState:
-    llm = get_llm()
+    api_key = state.get("custom_api_key")
+    model = state.get("custom_model")
+    llm = get_llm(api_key=api_key, model=model)
     result = llm.invoke(_build_messages(state))
     response_text = _normalize_llm_text(result.content)
     return {
@@ -267,17 +273,25 @@ def get_agent():
     return _agent
 
 
-def run_agent(message: str, thread_id: str = "default") -> dict:
+def run_agent(message: str, thread_id: str = "default", api_key: str | None = None, model: str | None = None) -> dict:
     """Chạy toàn bộ graph với memory saver và PII redaction theo thread_id."""
     clean_message = redact_pii(message)
     config = {"configurable": {"thread_id": thread_id}}
+    initial_state = {
+        "message": clean_message,
+        "messages": [HumanMessage(content=clean_message)],
+    }
+    if api_key:
+        initial_state["custom_api_key"] = api_key
+    if model:
+        initial_state["custom_model"] = model
     return get_agent().invoke(
-        {"message": clean_message, "messages": [HumanMessage(content=clean_message)]},
+        initial_state,
         config=config,
     )
 
 
-def stream_agent_response(message: str, thread_id: str = "default"):
+def stream_agent_response(message: str, thread_id: str = "default", api_key: str | None = None, model: str | None = None):
     """Generator streaming token-level cho FastAPI /chat/stream với PII redaction."""
     clean_message = redact_pii(message)
     config = {"configurable": {"thread_id": thread_id}}
@@ -290,6 +304,11 @@ def stream_agent_response(message: str, thread_id: str = "default"):
         "message": clean_message,
         "messages": list(existing_messages) + [HumanMessage(content=clean_message)],
     }
+    if api_key:
+        state["custom_api_key"] = api_key
+    if model:
+        state["custom_model"] = model
+
     state.update(classify(clean_message))
 
     # Lưu ngay HumanMessage vào SQLite checkpointer để Sidebar hiển thị phiên chat lập tức
@@ -317,7 +336,7 @@ def stream_agent_response(message: str, thread_id: str = "default"):
         "sources": state.get("sources", []),
     }
 
-    llm = get_llm()
+    llm = get_llm(api_key=api_key, model=model)
     full_chunks = []
     messages = _build_messages(state)
     for chunk in llm.stream(messages):
@@ -327,7 +346,6 @@ def stream_agent_response(message: str, thread_id: str = "default"):
             yield text_chunk
 
     full_response = "".join(full_chunks)
-
 
     agent.update_state(
         config,
