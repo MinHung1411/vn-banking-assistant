@@ -14,8 +14,10 @@ chromadb
 
 transformers
 torch
+sentence-transformers
 underthesea
 datasets
 
 httpx
 python-dotenv
+gradio
