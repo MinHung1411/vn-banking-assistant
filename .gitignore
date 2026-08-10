@@ -17,7 +17,8 @@ env/
 banking_chat.db*
 
 # Vector Database Index (Heavy Binary Data)
-chroma_banking_news/
+# chroma_banking_news/
+
 
 # IDE & OS Files
 .vscode/
