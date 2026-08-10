@@ -20,4 +20,3 @@ datasets
 
 httpx
 python-dotenv
-gradio
