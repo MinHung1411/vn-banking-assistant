@@ -8,6 +8,7 @@ langchain-core>=0.2
 langgraph>=0.1
 langgraph-checkpoint-sqlite>=2.0
 langchain-google-genai>=1.0
+google-genai>=0.1
 langchain-huggingface>=0.0.3
 langchain-chroma>=0.1
 chromadb>=0.5
