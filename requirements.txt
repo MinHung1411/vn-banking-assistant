@@ -18,8 +18,9 @@ underthesea
 # Utils
 httpx
 python-dotenv
-huggingface_hub<0.25
+huggingface_hub
 pydantic-settings
+pysqlite3-binary
 
 # UI
 streamlit
@@ -27,4 +28,5 @@ gradio
 
 # Pin for compatibility
 jinja2<3.1.4
+
 

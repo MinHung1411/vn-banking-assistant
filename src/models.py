@@ -17,6 +17,12 @@ from underthesea import word_tokenize
 from .config import settings
 
 _DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+if _DEVICE == "cpu":
+    try:
+        torch.set_num_threads(2)
+    except Exception:
+        pass
+
 
 
 def _segment(text: str) -> str:

@@ -1,11 +1,17 @@
-"""Hugging Face Spaces entrypoint — Gradio ChatInterface.
+import sys
 
-Monkey-patch jinja2 LRUCache trước khi import gradio để fix bug
-TypeError: unhashable type 'dict' trên HF Spaces.
-"""
+# Nếu ứng dụng được khởi chạy bởi Streamlit (vd: Streamlit Cloud mặc định tìm app.py)
+try:
+    import streamlit as st
+    if st.runtime.exists():
+        import streamlit_app
+        sys.exit(0)
+except Exception:
+    pass
 
 # === MUST BE FIRST: Patch jinja2 before gradio imports ===
 import jinja2.utils
+
 
 _OrigGet = jinja2.utils.LRUCache.get
 _OrigGetItem = jinja2.utils.LRUCache.__getitem__

@@ -1,11 +1,25 @@
+# Patch sqlite3 cho Streamlit Cloud Linux (ChromaDB tương thích)
+try:
+    __import__('pysqlite3')
+    import sys
+    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+except ImportError:
+    pass
+
 import os
 import time
 import uuid
 import streamlit as st
 from dotenv import load_dotenv
 
-# Load môi trường
+# Load môi trường từ .env
 load_dotenv()
+
+# Đồng bộ Streamlit Cloud Secrets vào os.environ
+if hasattr(st, "secrets"):
+    for key in st.secrets:
+        if isinstance(st.secrets[key], str) and key not in os.environ:
+            os.environ[key] = st.secrets[key]
 
 st.set_page_config(
     page_title="Vietnamese Banking Assistant",
@@ -13,6 +27,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
 
 # Import backend agent
 from src.agent import stream_agent_response, get_agent_history, clear_agent_history
@@ -257,27 +272,6 @@ with st.sidebar:
         st.caption("Chưa có phiên trò chuyện cá nhân nào.")
 
     st.markdown("---")
-    with st.expander("⚙️ Cấu hình API Key / LLM", expanded=False):
-        st.markdown(
-            "<small style='color: #94a3b8;'>Nếu bị lỗi 429 (Hết Quota), bạn có thể dán Gemini API Key cá nhân (Miễn phí từ Google AI Studio):</small>",
-            unsafe_allow_html=True
-        )
-        custom_key_val = st.text_input(
-            "Gemini API Key cá nhân:",
-            type="password",
-            placeholder="AQ.Ab8...",
-            key="custom_api_key_input"
-        )
-        custom_model_val = st.selectbox(
-            "Model Gemini:",
-            ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro", "gemini-flash-latest"],
-            index=0,
-            key="custom_model_input"
-        )
-        if custom_key_val.strip():
-            st.success("✅ Đã kích hoạt API Key cá nhân")
-
-    st.markdown("---")
     if st.button("🗑️ Xóa phiên hiện tại", use_container_width=True):
         clear_agent_history(st.session_state.thread_id)
         if st.session_state.thread_id in st.session_state.my_threads:
@@ -295,16 +289,15 @@ st.markdown("""
             <div class="brand-icon">🏦</div>
             <div>
                 <div class="brand-title">Vietnamese Banking Assistant</div>
-                <div class="brand-subtitle">Agent tư vấn tự động ngân hàng tiếng Việt</div>
+                <div class="brand-subtitle">Trợ lý ngân hàng số thông minh & bảo mật</div>
             </div>
         </div>
-        <div class="status-badge">🟢 Streamlit Online</div>
+        <div class="status-badge">🟢 Trực tuyến 24/7</div>
     </div>
     <div class="tech-pills-row">
-        <span class="tech-pill">🧠 <b>Model:</b> PhoBERT Fine-tuned</span>
-        <span class="tech-pill">🔀 <b>Router:</b> LangGraph StateGraph</span>
-        <span class="tech-pill">📚 <b>Knowledge:</b> Chroma Vector DB (RAG)</span>
-        <span class="tech-pill">⚡ <b>LLM:</b> Gemini API</span>
+        <span class="tech-pill">🔒 <b>Bảo mật:</b> Tự động che mờ thông tin cá nhân (PII)</span>
+        <span class="tech-pill">⚡ <b>Tốc độ:</b> Phản hồi tức thì</span>
+        <span class="tech-pill">🏛️ <b>Dịch vụ:</b> Tra cứu tỷ giá, thẻ, lãi suất & chi nhánh</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -315,20 +308,9 @@ for msg in st.session_state.messages:
         st.markdown(msg["content"])
         if "meta" in msg and msg["meta"]:
             meta = msg["meta"]
-            aspect = meta.get("aspect", "")
-            sentiment = meta.get("sentiment", "")
             escalate = meta.get("escalate", False)
-            
-            s_class = f"badge-sentiment-{sentiment}" if sentiment in ["positive", "neutral", "negative"] else "badge-sentiment-neutral"
-            badges_html = '<div class="badge-container">'
-            if aspect:
-                badges_html += f'<span class="badge badge-aspect">Khía cạnh: {aspect}</span>'
-            if sentiment:
-                badges_html += f'<span class="badge {s_class}">Cảm xúc: {sentiment}</span>'
             if escalate:
-                badges_html += '<span class="badge badge-escalate">⚠️ Chuyển tổng đài (Escalated)</span>'
-            badges_html += '</div>'
-            st.markdown(badges_html, unsafe_allow_html=True)
+                st.markdown('<div class="badge-container"><span class="badge badge-escalate">⚠️ Chuyển chuyên viên tư vấn (Escalated)</span></div>', unsafe_allow_html=True)
 
 # Gợi ý nhanh (Pill Buttons lơ lửng)
 st.caption("💡 GỢI Ý CÂU HỎI NHANH")
@@ -362,50 +344,31 @@ if prompt:
 
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
-        # Hiển thị trực tiếp dòng chữ trạng thái Đang suy nghĩ nổi bật ngay trong khung chat
-        message_placeholder.markdown("*🔍 Đang phân tích ý định (PhoBERT) & tra cứu tri thức (Chroma RAG)...* ▌")
+        message_placeholder.markdown("*🔍 Đang xử lý yêu cầu...* ▌")
         
         full_response = ""
         meta_info = {}
 
         try:
-            custom_key = st.session_state.get("custom_api_key_input", "").strip() or None
-            custom_model = st.session_state.get("custom_model_input", "").strip() or None
-
             generator = stream_agent_response(
                 prompt,
-                thread_id=st.session_state.thread_id,
-                api_key=custom_key,
-                model=custom_model
+                thread_id=st.session_state.thread_id
             )
             first_item = next(generator, None)
             if isinstance(first_item, dict):
                 meta_info = first_item
 
-            # Thay thế dòng suy nghĩ bằng câu trả lời tự nhiên gõ từng ký tự
+            # Streaming mượt mà trực tiếp theo token từ LLM
             for token in generator:
                 if isinstance(token, str):
-                    for char in token:
-                        full_response += char
-                        message_placeholder.markdown(full_response + "▌")
-                        time.sleep(0.008)
+                    full_response += token
+                    message_placeholder.markdown(full_response + "▌")
 
             message_placeholder.markdown(full_response)
 
-            aspect = meta_info.get("aspect", "")
-            sentiment = meta_info.get("sentiment", "")
             escalate = meta_info.get("escalate", False)
-
-            s_class = f"badge-sentiment-{sentiment}" if sentiment in ["positive", "neutral", "negative"] else "badge-sentiment-neutral"
-            badges_html = '<div class="badge-container">'
-            if aspect:
-                badges_html += f'<span class="badge badge-aspect">Khía cạnh: {aspect}</span>'
-            if sentiment:
-                badges_html += f'<span class="badge {s_class}">Cảm xúc: {sentiment}</span>'
             if escalate:
-                badges_html += '<span class="badge badge-escalate">⚠️ Chuyển tổng đài (Escalated)</span>'
-            badges_html += '</div>'
-            st.markdown(badges_html, unsafe_allow_html=True)
+                st.markdown('<div class="badge-container"><span class="badge badge-escalate">⚠️ Chuyển chuyên viên tư vấn (Escalated)</span></div>', unsafe_allow_html=True)
 
             st.session_state.messages.append({
                 "role": "assistant",
@@ -416,13 +379,11 @@ if prompt:
             err_str = str(e)
             if "429" in err_str or "quota" in err_str.lower() or "exceeded" in err_str.lower():
                 err_msg = (
-                    "⚠️ **Hệ thống Gemini API đang bận hoặc quá giới hạn lượt gọi (Lỗi 429 Quota Exceeded).**\n\n"
-                    "👉 **Cách khắc phục nhanh:**\n"
-                    "1. Mở menu **⚙️ Cấu hình API Key / LLM** ở thanh bên trái (Sidebar).\n"
-                    "2. Dán API Key Gemini cá nhân của bạn vào (Tạo miễn phí 100% tại [Google AI Studio](https://aistudio.google.com/apikey)).\n"
-                    "3. Hoặc vui lòng chờ 1-2 phút rồi gửi lại câu hỏi."
+                    "⚠️ **Hệ thống hiện đang phục vụ nhiều lượt truy cập cùng lúc.**\n\n"
+                    "Quý khách vui lòng gửi lại câu hỏi sau giây lát hoặc liên hệ hotline tổng đài để được tư vấn viên hỗ trợ trực tiếp ạ."
                 )
             else:
-                err_msg = f"Đã xảy ra lỗi khi xử lý: {err_str}"
+                err_msg = "⚠️ Đã xảy ra gián đoạn khi xử lý yêu cầu. Quý khách vui lòng thử lại sau giây lát."
             message_placeholder.markdown(err_msg)
             st.session_state.messages.append({"role": "assistant", "content": err_msg})
+

@@ -68,11 +68,18 @@ def redact_pii(text: str) -> str:
 
 
 def rewrite_query_with_context(state: TypedDict) -> str:
-    """Nếu có lịch sử hội thoại trước đó, sử dụng LLM để viết lại câu hỏi mới nhất của người dùng
-    thành một câu truy vấn RAG độc lập và rõ nghĩa."""
+    """Nếu có lịch sử hội thoại trước đó và câu hỏi chứa đại từ/ngắn mơ hồ, sử dụng LLM để viết lại
+    câu hỏi mới nhất thành một câu truy vấn RAG độc lập và rõ nghĩa."""
     history = state.get("messages", [])
     raw_message = state.get("message", "")
     if not history or len(history) <= 1:
+        return raw_message
+
+    # Tối ưu tốc độ: Nếu câu hỏi đã đầy đủ chi tiết (> 5 từ và không chứa đại từ tham chiếu), bỏ qua bước LLM rewrite
+    ambiguous_words = ["đó", "nó", "thế", "còn", "gói này", "thẻ này", "ở đâu", "bao nhiêu", "như thế nào", "sao", "thì sao", "gói đó"]
+    raw_lower = raw_message.lower()
+    has_ambiguity = any(w in raw_lower for w in ambiguous_words)
+    if len(raw_message.split()) > 5 and not has_ambiguity:
         return raw_message
 
     past_chats = []
@@ -103,6 +110,7 @@ def rewrite_query_with_context(state: TypedDict) -> str:
         return rewritten
     except Exception:
         return raw_message
+
 
 
 class AgentState(TypedDict, total=False):
