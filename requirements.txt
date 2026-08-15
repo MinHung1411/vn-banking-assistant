@@ -8,14 +8,15 @@ langchain-huggingface
 langchain-chroma
 chromadb
 
-# ML Models
+# ML Models & NLP
 transformers
 torch
 sentence-transformers
 underthesea
 
-
-# Utils
+# Backend & Web Serving
+fastapi
+uvicorn
 httpx
 python-dotenv
 huggingface_hub
@@ -24,9 +25,3 @@ pysqlite3-binary
 
 # UI
 streamlit
-gradio
-
-# Pin for compatibility
-jinja2<3.1.4
-
-
