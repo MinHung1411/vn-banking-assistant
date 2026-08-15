@@ -5,133 +5,142 @@ colorFrom: indigo
 colorTo: blue
 sdk: streamlit
 sdk_version: 1.38.0
-app_file: app_streamlit.py
+app_file: streamlit_app.py
 pinned: false
 ---
 
-# Vietnamese Banking Assistant (Multi-turn Agentic RAG)
+<div align="center">
 
-Hệ thống Trợ lý ảo AI ngân hàng tiếng Việt cấp Enterprise: phân loại phản hồi bằng **mô hình PhoBERT fine-tune riêng**, điều phối đa nhánh qua **LangGraph StateGraph**, lưu vết bộ nhớ hội thoại **SQLite Persistence**, xử lý câu hỏi đại từ mơ hồ với **Query Rewriter**, tra cứu tri thức **Chroma RAG (kèm Citations)**, bảo vệ thông tin với **PII Redactor**, cùng giao diện Web UI hỗ trợ **Voice Chat (Speech-to-Text / Text-to-Speech)**.
+# 🏦 Vietnamese Banking Assistant
+### *Enterprise Multi-turn Agentic AI for Vietnamese Banking Services*
+
+[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Streamlit_Cloud-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://vn-banking-assistant.streamlit.app)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![LangGraph](https://img.shields.io/badge/Orchestrator-LangGraph-FF6F00?style=for-the-badge&logo=langchain&logoColor=white)](https://langchain-ai.github.io/langgraph/)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![HuggingFace](https://img.shields.io/badge/Models-PhoBERT_Fine--tuned-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co/minhunhooo)
+
+<br/>
+
+> 🌐 **TRẢI NGHIỆM TRỰC TIẾP TẠI ĐÂY:**  
+> ### 👉 [https://vn-banking-assistant.streamlit.app](https://vn-banking-assistant.streamlit.app) 👈
+
+<br/>
+
+</div>
+
+---
+
+## 📌 Giới thiệu Tổng quan (Overview)
+
+**Vietnamese Banking Assistant** là hệ thống Trợ lý ảo AI thế hệ mới được thiết kế chuyên biệt cho ngành Ngân hàng – Tài chính tại Việt Nam. Hệ thống kết hợp sức mạnh của **Mô hình ngôn ngữ lớn (LLM)** với **Mô hình phân loại PhoBERT fine-tuned chuyên sâu**, kiến trúc điều phối **LangGraph StateGraph**, cơ sở tri thức **Chroma Vector RAG** và khiên bảo mật dữ liệu khách hàng **PII Redactor**.
+
+### 🌟 Điểm nổi bật:
+* 🚀 **Phản hồi siêu tốc & Streaming thời gian thực:** Token được truyền trực tiếp đến người dùng theo luồng mượt mà, độ trễ tối thiểu.
+* 🧠 **Định tuyến thông minh (Smart Routing):** 2 mô hình PhoBERT phân tích Aspect (14 khía cạnh) và Sentiment (3 sắc thái cảm xúc) để quyết định luồng xử lý (RAG / Tools / Chuyển tư vấn viên).
+* 💬 **Bộ nhớ đa lượt (Multi-turn Memory):** Tự động duy trì ngữ cảnh hội thoại, tự hiểu và viết lại các câu hỏi nối tiếp có đại từ mơ hồ (*"gói đó"*, *"kỳ hạn này"*...).
+* 🔒 **Bảo mật dữ liệu ngân hàng (PII Shield):** Tự động phát hiện và che mờ thông tin nhạy cảm (Số CCCD 12 số, Số thẻ 16 số, Mã OTP) trước khi xử lý.
+* 🧮 **Tích hợp bộ công cụ nghiệp vụ:** Tính lãi suất tiết kiệm chính xác, tra cứu tỷ giá ngoại tệ thực tế, kiểm tra thẻ và định vị cây ATM / Chi nhánh.
+
+---
+
+## 🎮 Trải nghiệm Nhanh (Quick Scenarios)
+
+Bạn có thể truy cập ngay **[Live Demo](https://vn-banking-assistant.streamlit.app)** và thử nghiệm các kịch bản thực tế:
+
+| Kịch bản | Câu hỏi mẫu thử nghiệm | Cơ chế xử lý |
+|---|---|---|
+| **Tra cứu tỷ giá** | *"Tỷ giá USD và EUR hôm nay bao nhiêu?"* | Gọi Tool tra cứu API ngoại tệ trực tiếp |
+| **Tính lãi tiết kiệm** | *"Tính lãi giúp tôi gửi 200 triệu kỳ hạn 12 tháng lãi suất 5.8%"* | Tool tính toán tài chính & lãi kép |
+| **Hỏi đáp quy trình** | *"Thủ tục mở thẻ tín dụng online cần những giấy tờ gì?"* | Chroma Vector DB (RAG) + Trích dẫn tri thức |
+| **Bảo vệ PII** | *"Thẻ của tôi là 9704 1234 5678 9999 có bị khóa không?"* | PII Redactor che mờ số thẻ trước khi xử lý |
+| **Tình huống khẩn cấp** | *"Tài khoản của tôi vừa bị trừ tiền lạ, hỗ trợ gấp!"* | Phát hiện cảm xúc tiêu cực ➡️ Tự động gắn nhãn Escalated |
 
 ---
 
 ## 🏗️ Kiến trúc Hệ thống (System Architecture)
 
-```
-                       Khách hàng gửi tin nhắn
-                                 │
-                                 ▼
-                     [PII Redactor (CCCD/Card/OTP)]
-                                 │
-                                 ▼
-                  [classify (PhoBERT Fine-tuned)]
-                                 │
-                                 ▼
-                         [route_decision]
-      ┌──────────────────────────┼──────────────────────────┐
-      ▼                          ▼                          ▼
- [escalate]                   [tool]                      [rag]
- (Chuyển tổng đài)   (Tỷ giá / Thẻ / Lãi suất / ATM)  (Query Rewriter + ChromaDB)
-      │                          │                          │
-      └──────────────────────────┼──────────────────────────┘
-                                 ▼
-                  [generate (Gemini LLM API)]
-                                 │
-                                 ▼
-              [FastAPI /chat/stream SSE Streaming]
-                                 │
-                                 ▼
-          [Web UI: Sidebar History + Voice Chat STT/TTS]
+```mermaid
+flowchart TD
+    User([👤 Khách hàng gửi tin nhắn]) --> PII[🛡️ PII Redactor\nChe mờ CCCD / Thẻ / OTP]
+    PII --> Classify[🧠 PhoBERT Fine-tuned\nPhân loại Aspect & Sentiment]
+    Classify --> Router{🔀 Router Decision}
+    
+    Router -->|Khẩn cấp / Tiêu cực| Escalate[⚠️ Chuyển chuyên viên tư vấn]
+    Router -->|Tỷ giá / Lãi suất / Thẻ / ATM| Tools[🧮 Banking Tools & Calculations]
+    Router -->|Hỏi đáp nghiệp vụ / Quy trình| RAG[📚 Chroma Vector DB RAG\nE5 Embeddings + Knowledge Base]
+    
+    Escalate --> Gen[⚡ Gemini Generation\nStreaming Token Engine]
+    Tools --> Gen
+    RAG --> Gen
+    
+    Gen --> Memory[(💾 SQLite State Memory\nPhiên trò chuyện cô lập)]
+    Gen --> UI([🖥️ Streamlit / Web UI\nHiển thị phản hồi tức thì])
 ```
 
-Toàn bộ luồng điều phối trạng thái (State Orchestration) nằm trong `src/agent.py`, sử dụng **LangGraph** (`StateGraph`) kết hợp **SqliteSaver** lưu vết hội thoại bền vững trong `banking_chat.db`.
+---
+
+## 🛠️ Công nghệ Sử dụng (Tech Stack)
+
+* **Core & Agent Orchestration:** Python 3.10+, [LangGraph](https://github.com/langchain-ai/langgraph) (`StateGraph`, `SqliteSaver`)
+* **NLP & Intent Classification:** [PhoBERT](https://huggingface.co/vinai/phobert-base-v2) fine-tuned trên UTS2017_Bank (Aspect & Sentiment)
+* **Retrieval-Augmented Generation (RAG):** [ChromaDB](https://www.trychroma.com/), [Multilingual-E5](https://huggingface.co/intfloat/multilingual-e5-base) Embeddings
+* **Generative AI:** Google Gemini API (`gemini-2.0-flash` / `gemini-1.5-flash`)
+* **UI & Serving:** [Streamlit](https://streamlit.io/) Cloud, [FastAPI](https://fastapi.tiangolo.com/) (REST & Server-Sent Events SSE)
+* **Testing & Quality Assurance:** Pytest (16+ Unit test cases kiểm thử logic routing, tools, PII, memory)
 
 ---
 
-## 🌟 Các Tính năng Nổi bật (Key Features)
+## 🚀 Hướng dẫn Cài đặt & Chạy Local
 
-1. **Model Fine-tune tiếng Việt**:
-   - 2 mô hình PhoBERT fine-tune trên Kaggle (`undertheseanlp/UTS2017_Bank`) cho Aspect Classification (14 nhãn) & Sentiment Analysis (3 nhãn).
-2. **Quản lý Bộ nhớ & Trò chuyện Đa lượt (Multi-turn Memory)**:
-   - Tích hợp `SqliteSaver` lưu trữ dữ liệu các phiên chat (`thread_id`) bền vững trong cơ sở dữ liệu SQLite.
-3. **Query Rewriter (Viết lại câu hỏi nối tiếp RAG)**:
-   - Tự động chuyển các câu hỏi ở lượt sau sử dụng đại từ mơ hồ (*"gói đó"*, *"thẻ này"*, *"nó"*) thành câu truy vấn RAG độc lập và đầy đủ ngữ cảnh.
-4. **Bộ Tools Nghiệp vụ Ngân hàng**:
-   - `get_exchange_rate`: Tra tỷ giá ngoại tệ thực tế từ REST API.
-   - `check_card_status_mock`: Tra cứu trạng thái khóa thẻ.
-   - `calculate_savings_interest`: Tính toán tiền lãi tiết kiệm và tổng tiền thu về khi đáo hạn.
-   - `search_atm_branch_mock`: Tra cứu chi nhánh và vị trí cây ATM 24/7 theo khu vực.
-5. **Bảo mật & An toàn Dữ liệu (PII Redactor)**:
-   - Tự động phát hiện và mờ hóa số CCCD (12 chữ số), Số thẻ (16 chữ số) và Mã OTP khẩn cấp trước khi đưa vào Agent/LLM.
-6. **RAG Citations & Knowledge Search**:
-   - Tra cứu tri thức tin tức/quy trình ngân hàng từ Chroma Vector DB với E5 Embeddings và đính kèm nguồn trích dẫn (`📌 Nguồn tham khảo`).
-7. **FastAPI SSE Streaming & Modern Web UI**:
-   - Streaming câu trả lời từng token thời gian thực (SSE).
-   - Sidebar Drawer quản lý danh sách cuộc trò chuyện cũ.
-   - **Voice Chat**: Nhận diện giọng nói tiếng Việt (Speech-to-Text) và phát âm thanh câu trả lời (Text-to-Speech).
-   - Nút Sao chép (Copy) và Đánh giá (Like/Dislike).
-
----
-
-## 🛠️ Nguồn gốc từng thành phần
-
-| Thành phần | Nguồn / Công nghệ |
-|---|---|
-| Model Phân loại | `phobert-banking-aspect`, `phobert-banking-sentiment` (Fine-tune trên Kaggle) |
-| Vector Store (RAG) | Chroma DB (`chroma_banking_news`) + HuggingFace E5 Embeddings |
-| Checkpointer & Memory | LangGraph `SqliteSaver` (`banking_chat.db`) |
-| Generative LLM | Gemini API (`gemini-2.0-flash` / `gemini-1.5-flash`) |
-| Web UI & Voice | Vanilla HTML/CSS/JS + Web Speech API (STT/TTS) |
-
----
-
-## 🚀 Hướng dẫn Chạy Local
-
-### 1. Cài đặt Dependencies
-
+### 1. Clone Repository & Cài đặt Thư viện
 ```bash
+git clone https://github.com/MinHung1411/vn-banking-assistant.git
+cd vn-banking-assistant
 pip install -r requirements.txt
 ```
 
-### 2. Tải & Giải nén Chroma DB
-
-Tải `chroma_banking_news.zip` từ Kaggle output (Save Version của notebook fine-tune), giải nén vào thư mục gốc project:
-
-```bash
-unzip chroma_banking_news.zip -d chroma_banking_news
-```
-
-### 3. Cấu hình `.env`
-
-Copy `.env.example` ➡️ `.env` và điền `GEMINI_API_KEY`:
-
+### 2. Thiết lập Biến Môi trường
+Tạo file `.env` tại thư mục gốc của dự án:
 ```env
 GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL=gemini-flash-latest
 ```
 
-### 4. Khởi chạy Server
+### 3. Khởi chạy Ứng dụng
 
+* **Chạy giao diện Streamlit UI (Khuyên dùng):**
 ```bash
-uvicorn api:app --reload
+streamlit run app_streamlit.py
 ```
 
-Mở trình duyệt truy cập: `http://localhost:8000`
+* **Chạy FastAPI Backend (kèm Web Voice UI):**
+```bash
+uvicorn api:app --reload --port 8000
+```
+Truy cập giao diện tại: `http://localhost:8000`
 
 ---
 
-## 🐳 Khởi chạy bằng Docker
+## 🐳 Khởi chạy với Docker
 
 ```bash
-docker compose up --build
+# Build và khởi chạy container
+docker compose up --build -d
 ```
 
 ---
 
-## 🧪 Khởi chạy Unit Tests
-
-Chạy toàn bộ 16 test cases kiểm thử logic routing, API schema, tools, PII redactor, Query rewriter và SqliteSaver:
+## 🧪 Chạy Kiểm thử (Unit Tests)
 
 ```bash
 pytest tests/ -v
 ```
 
+---
+
+<div align="center">
+
+Made with ❤️ by [MinHung1411](https://github.com/MinHung1411) • Trợ lý ảo AI ngân hàng tiếng Việt
+
+</div>
