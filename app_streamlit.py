@@ -360,6 +360,9 @@ if "thread_id" not in st.session_state:
 if "my_threads" not in st.session_state:
     st.session_state.my_threads = {}
 
+if "pending_prompt" not in st.session_state:
+    st.session_state.pending_prompt = None
+
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {"role": "assistant", "content": "Xin chào quý khách! Em là **Trợ lý ảo Ngân hàng**. Em có thể hỗ trợ quý khách tra cứu tỷ giá ngoại tệ, kiểm tra thông tin dịch vụ, tính lãi tiết kiệm hoặc kết nối tư vấn viên khi cần thiết ạ."}
@@ -375,6 +378,7 @@ with st.sidebar:
         st.session_state.messages = [
             {"role": "assistant", "content": "Xin chào quý khách! Em là **Trợ lý ảo Ngân hàng**. Quý khách cần em hỗ trợ thông tin gì hôm nay ạ?"}
         ]
+        st.session_state.pending_prompt = None
         st.rerun()
 
     st.markdown("---")
@@ -388,6 +392,7 @@ with st.sidebar:
             if st.button(btn_label, key=f"user_thread_{t_id}", use_container_width=True):
                 st.session_state.thread_id = t_id
                 st.session_state.messages = get_agent_history(t_id)
+                st.session_state.pending_prompt = None
                 st.rerun()
     else:
         st.caption("Chưa có phiên trò chuyện cá nhân nào.")
@@ -400,6 +405,7 @@ with st.sidebar:
         st.session_state.messages = [
             {"role": "assistant", "content": "Xin chào quý khách! Em là **Trợ lý ảo Ngân hàng**. Quý khách cần em hỗ trợ thông tin gì hôm nay ạ?"}
         ]
+        st.session_state.pending_prompt = None
         st.rerun()
 
 # MAIN INTERFACE
@@ -423,7 +429,18 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Hiển thị các tin nhắn hội thoại
+# 1. Tiếp nhận input từ Chat Input hoặc từ nút gợi ý
+user_input = st.chat_input("Nhập câu hỏi của quý khách tại đây...")
+prompt = user_input or st.session_state.pending_prompt
+st.session_state.pending_prompt = None
+
+if prompt:
+    if st.session_state.thread_id not in st.session_state.my_threads:
+        short_title = prompt.strip()[:30] + ("..." if len(prompt.strip()) > 30 else "")
+        st.session_state.my_threads[st.session_state.thread_id] = short_title
+    st.session_state.messages.append({"role": "user", "content": prompt})
+
+# 2. Hiển thị toàn bộ lịch sử tin nhắn
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
@@ -433,36 +450,8 @@ for msg in st.session_state.messages:
             if escalate:
                 st.markdown('<div class="badge-container"><span class="badge badge-escalate">⚠️ Chuyển chuyên viên tư vấn (Escalated)</span></div>', unsafe_allow_html=True)
 
-# Gợi ý nhanh - Thu gọn mini pill chips đặt ngay trên ô chat input
-st.markdown('<div class="quick-suggest-header">⚡ Gợi ý câu hỏi nhanh:</div>', unsafe_allow_html=True)
-col1, col2, col3, col4 = st.columns(4)
-
-selected_prompt = None
-with col1:
-    if st.button("💱 Tỷ giá USD", key="quick_usd", use_container_width=True):
-        selected_prompt = "Tỷ giá USD hôm nay bao nhiêu?"
-with col2:
-    if st.button("💳 Kiểm tra thẻ", key="quick_card", use_container_width=True):
-        selected_prompt = "Kiểm tra giúp tôi trạng thái thẻ ****1234"
-with col3:
-    if st.button("💰 Lãi tiết kiệm", key="quick_save", use_container_width=True):
-        selected_prompt = "Tính lãi tiết kiệm 100 triệu gửi 12 tháng lãi suất 5.5%"
-with col4:
-    if st.button("📍 ATM & Chi nhánh", key="quick_branch", use_container_width=True):
-        selected_prompt = "Tìm giúp tôi chi nhánh và cây ATM ở Quận 1"
-
-# Chat Input & Stream Processing
-prompt = st.chat_input("Nhập câu hỏi của quý khách tại đây...") or selected_prompt
-
-if prompt:
-    if st.session_state.thread_id not in st.session_state.my_threads:
-        short_title = prompt.strip()[:30] + ("..." if len(prompt.strip()) > 30 else "")
-        st.session_state.my_threads[st.session_state.thread_id] = short_title
-
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
-
+# 3. Nếu tin nhắn cuối cùng là của user -> Bot xử lý và stream câu trả lời ngay
+if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         message_placeholder.markdown("*🔍 Đang xử lý yêu cầu...* ▌")
@@ -472,7 +461,7 @@ if prompt:
 
         try:
             generator = stream_agent_response(
-                prompt,
+                st.session_state.messages[-1]["content"],
                 thread_id=st.session_state.thread_id
             )
             first_item = next(generator, None)
@@ -507,4 +496,26 @@ if prompt:
                 err_msg = "⚠️ Đã xảy ra gián đoạn khi xử lý yêu cầu. Quý khách vui lòng thử lại sau giây lát."
             message_placeholder.markdown(err_msg)
             st.session_state.messages.append({"role": "assistant", "content": err_msg})
+        st.rerun()
+
+# 4. GỢI Ý CÂU HỎI NHANH: LUÔN LUÔN NẰM KẾ TIẾP SAU CÂU TRẢ LỜI CỦA BOT CHAT (Ở CUỐI CÙNG)
+st.markdown('<div class="quick-suggest-header">⚡ GỢI Ý CÂU HỎI NHANH:</div>', unsafe_allow_html=True)
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    if st.button("💱 Tỷ giá USD", key="quick_usd", use_container_width=True):
+        st.session_state.pending_prompt = "Tỷ giá USD hôm nay bao nhiêu?"
+        st.rerun()
+with col2:
+    if st.button("💳 Kiểm tra thẻ", key="quick_card", use_container_width=True):
+        st.session_state.pending_prompt = "Kiểm tra giúp tôi trạng thái thẻ ****1234"
+        st.rerun()
+with col3:
+    if st.button("💰 Lãi tiết kiệm", key="quick_save", use_container_width=True):
+        st.session_state.pending_prompt = "Tính lãi tiết kiệm 100 triệu gửi 12 tháng lãi suất 5.5%"
+        st.rerun()
+with col4:
+    if st.button("📍 ATM & Chi nhánh", key="quick_branch", use_container_width=True):
+        st.session_state.pending_prompt = "Tìm giúp tôi chi nhánh và cây ATM ở Quận 1"
+        st.rerun()
 
