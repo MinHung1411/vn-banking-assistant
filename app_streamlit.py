@@ -32,7 +32,7 @@ st.set_page_config(
 # Import backend agent
 from src.agent import stream_agent_response, get_agent_history, clear_agent_history
 
-# Custom CSS Glassmorphism ép Full Dark Mode 100%
+# Custom CSS Glassmorphism ép Full Dark Mode 100% & Giao diện Chat Zalo/Messenger
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
@@ -52,9 +52,9 @@ st.markdown("""
     footer {visibility: hidden;}
 
     .stMainBlockContainer {
-        padding-top: 1.5rem !important;
+        padding-top: 1.2rem !important;
         padding-bottom: 2rem !important;
-        max-width: 1100px !important;
+        max-width: 1050px !important;
     }
 
     div[data-testid="stBottomBlockContainer"] {
@@ -70,6 +70,7 @@ st.markdown("""
         background-color: #1e293b !important;
         border: 1px solid rgba(255, 255, 255, 0.15) !important;
         border-radius: 16px !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
     }
     
     div[data-testid="stChatInput"] textarea {
@@ -85,85 +86,203 @@ st.markdown("""
         border: none !important;
     }
 
+    /* === KHUNG CHAT ĐỐI THOẠI (ZALO / MESSENGER STYLE) === */
     div[data-testid="stChatMessage"] {
+        display: flex !important;
+        width: fit-content !important;
+        min-width: 80px !important;
+        padding: 14px 18px !important;
+        margin-bottom: 14px !important;
+        transition: all 0.2s ease !important;
+    }
+
+    /* User Message: Căn sát mép phải, nền xanh Messenger/Zalo nổi bật */
+    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]),
+    div[data-testid="stChatMessage"]:has([data-testid*="User"]),
+    div[data-testid="stChatMessage"]:has([aria-label*="user" i]),
+    div[data-testid="stChatMessage"]:has(.stChatMessageAvatarUser) {
+        flex-direction: row-reverse !important;
+        margin-left: auto !important;
+        margin-right: 0 !important;
+        max-width: 78% !important;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+        border: 1px solid rgba(147, 197, 253, 0.3) !important;
+        border-radius: 20px 20px 4px 20px !important;
+        box-shadow: 0 4px 16px rgba(37, 99, 235, 0.28) !important;
+    }
+
+    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) [data-testid="stChatMessageContent"],
+    div[data-testid="stChatMessage"]:has([data-testid*="User"]) [data-testid="stChatMessageContent"] {
+        text-align: left !important;
+    }
+
+    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) p,
+    div[data-testid="stChatMessage"]:has([data-testid*="User"]) p,
+    div[data-testid="stChatMessage"]:has([data-testid*="User"]) span {
+        color: #ffffff !important;
+        font-size: 0.96rem !important;
+        line-height: 1.55 !important;
+    }
+
+    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) [data-testid="stChatMessageAvatarUser"],
+    div[data-testid="stChatMessage"]:has([data-testid*="User"]) [data-testid*="Avatar"] {
+        margin-left: 12px !important;
+        margin-right: 0 !important;
+        background: rgba(255, 255, 255, 0.2) !important;
+        border: 1px solid rgba(255, 255, 255, 0.4) !important;
+        border-radius: 50% !important;
+    }
+
+    /* Assistant Message: Căn mép trái, màu nền Dark Slate sang trọng */
+    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]),
+    div[data-testid="stChatMessage"]:has([data-testid*="Assistant"]),
+    div[data-testid="stChatMessage"]:has([aria-label*="assistant" i]),
+    div[data-testid="stChatMessage"]:has(.stChatMessageAvatarAssistant) {
+        flex-direction: row !important;
+        margin-right: auto !important;
+        margin-left: 0 !important;
+        max-width: 82% !important;
         background-color: #1e293b !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 18px !important;
-        padding: 18px !important;
-        color: #f8fafc !important;
-        margin-bottom: 14px !important;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+        border-radius: 20px 20px 20px 4px !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
     }
-    
-    div[data-testid="stChatMessage"] p, div[data-testid="stChatMessage"] div {
+
+    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) p,
+    div[data-testid="stChatMessage"]:has([data-testid*="Assistant"]) p,
+    div[data-testid="stChatMessage"]:has([data-testid*="Assistant"]) div {
         color: #f8fafc !important;
-        font-size: 0.98rem !important;
+        font-size: 0.96rem !important;
         line-height: 1.65 !important;
+    }
+
+    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) [data-testid="stChatMessageAvatarAssistant"],
+    div[data-testid="stChatMessage"]:has([data-testid*="Assistant"]) [data-testid*="Avatar"] {
+        margin-right: 12px !important;
+        margin-left: 0 !important;
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+        border: 1px solid rgba(245, 158, 11, 0.5) !important;
+        border-radius: 50% !important;
+    }
+
+    /* Bảng và định dạng trong tin nhắn */
+    div[data-testid="stChatMessage"] table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        margin: 8px 0 !important;
+        font-size: 0.88rem !important;
+    }
+    div[data-testid="stChatMessage"] th, div[data-testid="stChatMessage"] td {
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        padding: 6px 10px !important;
+    }
+    div[data-testid="stChatMessage"] th {
+        background: rgba(255, 255, 255, 0.06) !important;
+        color: #818cf8 !important;
+    }
+
+    /* === GỢI Ý CÂU HỎI NHANH (MINI PILL CHIPS) === */
+    .quick-suggest-header {
+        font-size: 0.74rem !important;
+        font-weight: 600 !important;
+        color: #94a3b8 !important;
+        margin-top: 14px !important;
+        margin-bottom: 6px !important;
+        letter-spacing: 0.04em !important;
+        text-transform: uppercase !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+    }
+
+    div[data-testid="stHorizontalBlock"] .stButton>button {
+        padding: 4px 8px !important;
+        font-size: 0.78rem !important;
+        font-weight: 500 !important;
+        border-radius: 16px !important;
+        background: rgba(30, 41, 59, 0.75) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        color: #e2e8f0 !important;
+        min-height: 32px !important;
+        height: 32px !important;
+        line-height: 1 !important;
+        white-space: nowrap !important;
+        text-overflow: ellipsis !important;
+        overflow: hidden !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    div[data-testid="stHorizontalBlock"] .stButton>button:hover {
+        background: #4f46e5 !important;
+        color: #ffffff !important;
+        border-color: #818cf8 !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35) !important;
     }
 
     .brand-header {
         background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%);
         border: 1px solid rgba(255, 255, 255, 0.12);
-        padding: 20px 24px;
-        border-radius: 20px;
-        margin-bottom: 20px;
+        padding: 16px 20px;
+        border-radius: 18px;
+        margin-bottom: 18px;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     }
     .brand-top-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 14px;
+        margin-bottom: 10px;
     }
     .brand-left {
         display: flex;
         align-items: center;
-        gap: 14px;
+        gap: 12px;
     }
     .brand-icon {
-        width: 48px;
-        height: 48px;
+        width: 42px;
+        height: 42px;
         background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-        border-radius: 14px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 26px;
+        font-size: 22px;
         box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
     }
     .brand-title {
-        font-size: 1.55rem;
+        font-size: 1.35rem;
         font-weight: 800;
         color: #ffffff;
         letter-spacing: -0.02em;
     }
     .brand-subtitle {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         color: #94a3b8;
-        margin-top: 2px;
+        margin-top: 1px;
     }
     .status-badge {
-        padding: 6px 14px;
+        padding: 4px 12px;
         background: rgba(16, 185, 129, 0.15);
         border: 1px solid rgba(16, 185, 129, 0.3);
         border-radius: 20px;
-        font-size: 0.78rem;
+        font-size: 0.75rem;
         color: #34d399;
         font-weight: 600;
     }
     .tech-pills-row {
         display: flex;
         flex-wrap: wrap;
-        gap: 10px;
-        padding-top: 12px;
+        gap: 8px;
+        padding-top: 10px;
         border-top: 1px solid rgba(255, 255, 255, 0.08);
     }
     .tech-pill {
-        padding: 5px 12px;
+        padding: 4px 10px;
         background: rgba(255, 255, 255, 0.05);
         border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
-        font-size: 0.78rem;
+        border-radius: 8px;
+        font-size: 0.75rem;
         color: #cbd5e1;
     }
     .tech-pill b {
@@ -174,7 +293,7 @@ st.markdown("""
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
-        margin-top: 10px;
+        margin-top: 8px;
     }
     .badge {
         padding: 4px 12px;
@@ -213,16 +332,18 @@ st.markdown("""
         border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
     }
 
-    .stButton>button {
-        border-radius: 20px !important;
+    section[data-testid="stSidebar"] .stButton>button {
+        border-radius: 12px !important;
         border: 1px solid rgba(99, 102, 241, 0.3) !important;
         background: rgba(30, 41, 59, 0.9) !important;
         color: #f1f5f9 !important;
         font-weight: 500 !important;
         font-size: 0.85rem !important;
+        padding: 8px 12px !important;
+        min-height: 40px !important;
         transition: all 0.2s ease !important;
     }
-    .stButton>button:hover {
+    section[data-testid="stSidebar"] .stButton>button:hover {
         background: #4f46e5 !important;
         color: #ffffff !important;
         border-color: #6366f1 !important;
@@ -312,22 +433,22 @@ for msg in st.session_state.messages:
             if escalate:
                 st.markdown('<div class="badge-container"><span class="badge badge-escalate">⚠️ Chuyển chuyên viên tư vấn (Escalated)</span></div>', unsafe_allow_html=True)
 
-# Gợi ý nhanh (Pill Buttons lơ lửng)
-st.caption("💡 GỢI Ý CÂU HỎI NHANH")
+# Gợi ý nhanh - Thu gọn mini pill chips đặt ngay trên ô chat input
+st.markdown('<div class="quick-suggest-header">⚡ Gợi ý câu hỏi nhanh:</div>', unsafe_allow_html=True)
 col1, col2, col3, col4 = st.columns(4)
 
 selected_prompt = None
 with col1:
-    if st.button("💱 Tỷ giá USD hôm nay", use_container_width=True):
+    if st.button("💱 Tỷ giá USD", key="quick_usd", use_container_width=True):
         selected_prompt = "Tỷ giá USD hôm nay bao nhiêu?"
 with col2:
-    if st.button("💳 Trạng thái thẻ", use_container_width=True):
+    if st.button("💳 Kiểm tra thẻ", key="quick_card", use_container_width=True):
         selected_prompt = "Kiểm tra giúp tôi trạng thái thẻ ****1234"
 with col3:
-    if st.button("💰 Tính lãi tiết kiệm", use_container_width=True):
+    if st.button("💰 Lãi tiết kiệm", key="quick_save", use_container_width=True):
         selected_prompt = "Tính lãi tiết kiệm 100 triệu gửi 12 tháng lãi suất 5.5%"
 with col4:
-    if st.button("📍 Cây ATM & Chi nhánh", use_container_width=True):
+    if st.button("📍 ATM & Chi nhánh", key="quick_branch", use_container_width=True):
         selected_prompt = "Tìm giúp tôi chi nhánh và cây ATM ở Quận 1"
 
 # Chat Input & Stream Processing
